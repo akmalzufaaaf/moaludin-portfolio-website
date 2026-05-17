@@ -1,0 +1,1191 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>moaludin — smart contract audit</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,300;0,6..72,400;0,6..72,500;1,6..72,300;1,6..72,400;1,6..72,500;1,6..72,600&family=JetBrains+Mono:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg: #f1ead8;
+  --bg-2: #e7dfca;
+  --ink: #221a13;
+  --ink-soft: #6b5d4d;
+  --rule: #cdbf9f;
+  --accent: #b04a26;
+  --accent-soft: #c66a45;
+  --dot: #d6c9a8;
+  --busy: #221a13;
+  --paper: #f7f1e0;
+  --warn: #b04a26;
+  --hand: "Newsreader", "Times New Roman", serif;
+  --mono: "JetBrains Mono", ui-monospace, monospace;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+html, body {
+  background: var(--bg);
+  color: var(--ink);
+  font-family: var(--mono);
+  font-size: 14px;
+  line-height: 1.55;
+  -webkit-font-smoothing: antialiased;
+  background-image:
+    linear-gradient(to right, rgba(176,74,38,0.06) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(176,74,38,0.06) 1px, transparent 1px);
+  background-size: 28px 28px;
+}
+a { color: inherit; text-decoration: none; }
+button { font-family: var(--mono); cursor: pointer; border: none; background: none; color: inherit; }
+
+/* ───── shell ───── */
+.shell {
+  max-width: 1180px;
+  margin: 0 auto;
+  padding: 72px clamp(40px, 7vw, 110px) 100px;
+}
+
+/* ───── top tag ───── */
+.tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 12px;
+  font-size: 13px;
+  letter-spacing: 0.06em;
+  color: var(--ink);
+  margin-bottom: 80px;
+  gap: 16px;
+  display: none;
+}
+.tag .pulse {
+  width: 10px; height: 10px;
+  border-radius: 999px;
+  background: var(--accent);
+  box-shadow: 0 0 0 0 rgba(29,79,182,.55);
+  animation: pulse 2s ease-in-out infinite;
+}
+@keyframes pulse {
+  0%   { box-shadow: 0 0 0 0 rgba(29,79,182,.55); }
+  70%  { box-shadow: 0 0 0 10px rgba(29,79,182,0); }
+  100% { box-shadow: 0 0 0 0 rgba(29,79,182,0); }
+}
+
+/* ───── hero ───── */
+.hero-block {
+  min-height: calc(100vh - 72px);
+  display: flex;
+  flex-direction: column;
+}
+.hero {
+  display: grid;
+  grid-template-columns: 1.2fr 1fr;
+  gap: clamp(40px, 6vw, 100px);
+  align-items: center;
+  flex: 1;
+  padding-top: 24px;
+}
+.hero-left { padding-top: 0; }
+.hero-name {
+  font-family: var(--hand);
+  font-style: italic;
+  font-weight: 400;
+  font-size: clamp(64px, 9vw, 132px);
+  line-height: 0.92;
+  letter-spacing: -0.02em;
+  color: var(--ink);
+  position: relative;
+  display: inline-block;
+}
+.hero-name .ast {
+  color: var(--accent);
+  display: inline-block;
+  transform: translateY(-0.45em);
+  font-size: 0.32em;
+  margin-left: 6px;
+  font-style: normal;
+  letter-spacing: 0;
+  animation: spin 8s linear infinite;
+  transform-origin: 50% 60%;
+}
+@keyframes spin {
+  from { transform: translateY(-0.45em) rotate(0deg); }
+  to   { transform: translateY(-0.45em) rotate(360deg); }
+}
+.hero-tag {
+  margin-top: 44px;
+  font-size: 16px;
+  color: var(--ink);
+  letter-spacing: 0.02em;
+  display: inline-flex;
+  align-items: center;
+  gap: 0;
+}
+.hero-tag .typed {
+  display: inline-block;
+  white-space: nowrap;
+}
+.hero-tag .caret {
+  display: inline-block;
+  width: 9px; height: 1.05em;
+  background: var(--accent);
+  vertical-align: -3px;
+  margin-left: 2px;
+  animation: blink 1s steps(2) infinite;
+}
+@keyframes blink { 50% { opacity: 0; } }
+
+.hero-right { padding-top: 12px; }
+.elsewhere-head {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  color: var(--accent);
+  font-size: 12px;
+  letter-spacing: 0.1em;
+  margin-bottom: 36px;
+}
+.elsewhere-head .live-dot {
+  width: 8px; height: 8px; border-radius: 999px;
+  background: var(--accent);
+  box-shadow: 0 0 0 0 rgba(176,74,38,.5);
+  animation: pulse-live 2s ease-in-out infinite;
+  flex-shrink: 0;
+}
+@keyframes pulse-live {
+  0%   { box-shadow: 0 0 0 0 rgba(176,74,38,.5); }
+  70%  { box-shadow: 0 0 0 8px rgba(176,74,38,0); }
+  100% { box-shadow: 0 0 0 0 rgba(176,74,38,0); }
+}
+.squiggle {
+  width: 60px; height: 12px;
+  flex-shrink: 0;
+  color: var(--accent);
+}
+.elsewhere-list { display: grid; gap: 28px; }
+.el-item {
+  display: flex;
+  align-items: baseline;
+  gap: 18px;
+  text-decoration: none;
+  color: var(--ink);
+  position: relative;
+  transition: transform .25s cubic-bezier(.2,.7,.2,1);
+}
+.el-item:hover { transform: translateX(8px); }
+.el-num {
+  font-size: 12px;
+  color: var(--ink-soft);
+  letter-spacing: 0.06em;
+  width: 18px;
+}
+.el-name {
+  font-family: var(--hand);
+  font-style: italic;
+  font-size: 36px;
+  font-weight: 400;
+  letter-spacing: -0.02em;
+  line-height: 1;
+  color: var(--ink);
+}
+.el-handle {
+  font-size: 12px;
+  color: var(--ink-soft);
+  letter-spacing: 0.04em;
+  margin-left: -4px;
+  align-self: flex-end;
+  padding-bottom: 6px;
+  transition: color .25s;
+}
+.el-item:hover .el-handle { color: var(--accent); }
+
+.bottom-row {
+  margin-top: auto;
+  padding-top: 40px;
+  padding-bottom: 24px;
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  font-size: 13px;
+  color: var(--ink-soft);
+  letter-spacing: 0.04em;
+}
+.bottom-row .ast-mark { color: var(--accent); margin-right: 8px; }
+.bottom-row u {
+  text-decoration: underline;
+  text-decoration-color: var(--ink-soft);
+  text-underline-offset: 4px;
+}
+.bottom-row .sig {
+  font-family: var(--hand);
+  font-style: italic;
+  font-size: 22px;
+  color: var(--ink-soft);
+  font-weight: 400;
+}
+
+/* ───── divider ───── */
+.divider {
+  margin: 100px 0 60px;
+  display: flex;
+  align-items: center;
+  gap: 24px;
+  color: var(--ink-soft);
+  font-size: 12px;
+  letter-spacing: 0.12em;
+}
+.divider .line { flex: 1; height: 1px; background: var(--rule); }
+.divider .ix { color: var(--accent); }
+
+/* ───── calendar ───── */
+.cal-head {
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  gap: 24px;
+  align-items: end;
+  margin-bottom: 28px;
+}
+.cal-title {
+  font-family: var(--hand);
+  font-style: italic;
+  font-size: 36px;
+  line-height: 0.95;
+  letter-spacing: -0.02em;
+  font-weight: 400;
+}
+.cal-title .month-name { color: var(--ink); }
+.cal-title .year { color: var(--accent); margin-left: 12px; }
+.cal-blurb {
+  color: var(--ink-soft);
+  font-size: 13px;
+  max-width: 36ch;
+  align-self: end;
+  padding-bottom: 12px;
+}
+.cal-blurb b { color: var(--ink); font-weight: 500; }
+.cal-nav { display: flex; gap: 8px; align-self: end; padding-bottom: 10px; }
+.cal-nav button {
+  width: 36px; height: 36px;
+  border: 1px solid var(--rule);
+  border-radius: 999px;
+  font-size: 14px;
+  transition: background .2s, color .2s, border-color .2s;
+}
+.cal-nav button:hover { background: var(--ink); color: var(--bg); border-color: var(--ink); }
+.cal-nav .today-btn {
+  width: auto;
+  padding: 0 16px;
+  font-size: 11px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.cal-weekdays {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 4px;
+  margin-bottom: 4px;
+}
+.cal-weekdays div {
+  font-size: 9px;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: var(--ink-soft);
+  padding: 3px 6px;
+}
+
+.cal-grid {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 4px;
+}
+.cal-cell {
+  background: var(--paper);
+  border-radius: 5px;
+  min-height: 68px;
+  padding: 6px 8px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  border: 1px solid transparent;
+  transition: border-color .2s, transform .15s, background .2s;
+  position: relative;
+  cursor: pointer;
+}
+.cal-cell:hover { border-color: var(--rule); }
+.cal-cell.out { background: transparent; opacity: 0.4; }
+.cal-cell.today { background: var(--ink); }
+.cal-cell.today .cal-date { color: var(--bg); }
+.cal-cell.today .ev { background: var(--accent); color: #fff; border-color: var(--accent); }
+.cal-cell.today .cal-add { color: var(--bg); opacity: .5; }
+.cal-cell.selected { border-color: var(--accent); border-width: 2px; padding: 7px 9px; }
+
+.cal-date {
+  font-size: 10px;
+  color: var(--ink);
+  letter-spacing: 0.04em;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+.cal-date .wd { color: var(--ink-soft); font-size: 9px; text-transform: uppercase; }
+.cal-add {
+  font-size: 14px;
+  color: var(--ink-soft);
+  opacity: 0;
+  transition: opacity .2s;
+  line-height: 1;
+}
+.cal-cell:hover .cal-add { opacity: 0.7; }
+body.locked .cal-add { display: none; }
+body.locked .cal-cell { cursor: default; }
+body.locked .cal-cell:hover { border-color: transparent; }
+body.locked .cal-cell.has-ev { cursor: pointer; }
+body.locked .cal-cell.has-ev:hover { border-color: var(--rule); }
+
+/* ───── owner lock modal ───── */
+.lock-modal {
+  position: fixed; inset: 0;
+  background: rgba(34,26,19,0.55);
+  z-index: 500;
+  display: none;
+  align-items: center;
+  justify-content: center;
+  font-family: var(--mono);
+}
+.lock-modal.open { display: flex; }
+.lock-card {
+  background: var(--paper);
+  border: 1px solid var(--rule);
+  border-radius: 10px;
+  padding: 28px 28px 24px;
+  width: min(360px, calc(100vw - 32px));
+  box-shadow: 0 24px 60px rgba(22,23,15,.25);
+}
+.lock-card .lock-title {
+  font-family: var(--hand);
+  font-style: italic;
+  font-size: 28px;
+  line-height: 1;
+  margin-bottom: 4px;
+}
+.lock-card .lock-sub {
+  font-size: 11px;
+  color: var(--ink-soft);
+  margin-bottom: 18px;
+  letter-spacing: 0.04em;
+}
+.lock-card input {
+  width: 100%;
+  padding: 10px 12px;
+  background: var(--bg);
+  border: 1px solid var(--rule);
+  border-radius: 6px;
+  font-family: var(--mono);
+  font-size: 13px;
+  color: var(--ink);
+  outline: none;
+  margin-bottom: 8px;
+}
+.lock-card input:focus { border-color: var(--accent); }
+.lock-card .lock-err {
+  font-size: 11px;
+  color: var(--accent);
+  min-height: 16px;
+  margin-bottom: 12px;
+}
+.lock-card .lock-actions { display: flex; gap: 8px; justify-content: flex-end; }
+.lock-card button {
+  padding: 8px 14px;
+  border: 1px solid var(--rule);
+  border-radius: 6px;
+  font-size: 12px;
+  background: var(--bg);
+  transition: background .15s, border-color .15s;
+}
+.lock-card button:hover { background: var(--rule); }
+.lock-card button.primary { background: var(--ink); color: var(--paper); border-color: var(--ink); }
+.lock-card button.primary:hover { background: var(--accent); border-color: var(--accent); }
+
+/* owner badge (top-right when unlocked) */
+.owner-badge {
+  position: fixed;
+  top: 16px; right: 16px;
+  z-index: 400;
+  font-family: var(--mono);
+  font-size: 10px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  background: var(--ink);
+  color: var(--paper);
+  padding: 6px 10px;
+  border-radius: 999px;
+  display: none;
+  gap: 8px;
+  align-items: center;
+}
+.owner-badge.show { display: inline-flex; }
+.owner-badge .pulse {
+  width: 6px; height: 6px; border-radius: 999px;
+  background: #6acc6a;
+  box-shadow: 0 0 0 0 rgba(106,204,106,0.7);
+  animation: pulse-dot 1.8s infinite;
+}
+@keyframes pulse-dot {
+  0% { box-shadow: 0 0 0 0 rgba(106,204,106,0.5); }
+  70% { box-shadow: 0 0 0 6px rgba(106,204,106,0); }
+  100% { box-shadow: 0 0 0 0 rgba(106,204,106,0); }
+}
+.owner-badge button {
+  font: inherit;
+  background: none; border: none; color: inherit;
+  cursor: pointer; opacity: .6;
+  padding: 0 0 0 4px;
+}
+.owner-badge button:hover { opacity: 1; }
+
+/* export toast */
+.toast {
+  position: fixed;
+  left: 50%;
+  bottom: 32px;
+  transform: translateX(-50%) translateY(20px);
+  background: var(--ink);
+  color: var(--paper);
+  padding: 10px 18px;
+  border-radius: 999px;
+  font-family: var(--mono);
+  font-size: 11px;
+  letter-spacing: 0.06em;
+  z-index: 600;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity .25s, transform .25s;
+}
+.toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+
+/* read-only popover (visitor) */
+.popover {
+  position: fixed;
+  z-index: 250;
+  background: var(--paper);
+  border: 1px solid var(--rule);
+  border-radius: 8px;
+  padding: 12px 14px;
+  box-shadow: 0 12px 30px rgba(22,23,15,.18);
+  font-family: var(--mono);
+  font-size: 12px;
+  display: none;
+  max-width: 260px;
+}
+.popover.open { display: block; }
+.popover .pop-date {
+  font-family: var(--hand);
+  font-style: italic;
+  font-size: 18px;
+  margin-bottom: 6px;
+}
+.popover .pop-list { display: grid; gap: 4px; }
+
+/* export button in editor */
+.ed-export {
+  margin-top: 12px;
+  padding-top: 12px;
+  border-top: 1px dashed var(--rule);
+  display: flex;
+  gap: 8px;
+  font-size: 11px;
+  align-items: center;
+}
+.ed-export button {
+  padding: 5px 10px;
+  border: 1px solid var(--rule);
+  border-radius: 4px;
+  background: var(--bg);
+  font-size: 11px;
+}
+.ed-export button:hover { background: var(--rule); }
+.ed-export .hint { color: var(--ink-soft); font-size: 10px; }
+
+.ev-list { display: grid; gap: 2px; margin-top: 1px; }
+.ev {
+  font-size: 9.5px;
+  background: var(--bg-2);
+  border: 1px solid var(--rule);
+  color: var(--ink);
+  padding: 2px 5px;
+  border-radius: 3px;
+  display: flex;
+  gap: 4px;
+  align-items: center;
+  letter-spacing: 0.02em;
+  line-height: 1.2;
+  cursor: pointer;
+  transition: background .15s;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.ev:hover { background: var(--accent); color: #fff; border-color: var(--accent); }
+.ev .dot {
+  width: 4px; height: 4px;
+  border-radius: 999px;
+  background: var(--accent);
+  flex-shrink: 0;
+}
+.ev.tag-audit .dot   { background: #1d4fb6; }
+.ev.tag-study .dot   { background: #a8542f; }
+.ev.tag-contest .dot { background: #4a8a3e; }
+.ev.tag-personal .dot{ background: #7b3fbb; }
+.ev.tag-writing .dot { background: #c4992a; }
+
+.ev-more {
+  font-size: 9.5px;
+  color: var(--ink-soft);
+  padding: 0 6px;
+  letter-spacing: 0.04em;
+}
+
+/* ───── editor panel ───── */
+.editor {
+  position: fixed;
+  right: 24px;
+  bottom: 24px;
+  width: 320px;
+  background: var(--paper);
+  border: 1px solid var(--rule);
+  border-radius: 10px;
+  padding: 20px;
+  box-shadow: 0 18px 40px rgba(22,23,15,.15), 0 2px 6px rgba(22,23,15,.08);
+  z-index: 200;
+  display: none;
+  font-size: 13px;
+}
+.editor.open { display: block; }
+.editor .ed-date {
+  font-family: var(--hand);
+  font-style: italic;
+  font-size: 32px;
+  font-weight: 400;
+  line-height: 1;
+  margin-bottom: 4px;
+}
+.editor .ed-sub {
+  font-size: 11px;
+  color: var(--ink-soft);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  margin-bottom: 16px;
+}
+.ed-existing { display: grid; gap: 6px; margin-bottom: 14px; }
+.ed-existing .ev { padding: 6px 10px; font-size: 12px; justify-content: space-between; }
+.ed-existing .ev .x {
+  background: none; border: none;
+  font-size: 14px; color: inherit;
+  padding: 0; line-height: 1;
+  opacity: 0.5;
+}
+.ed-existing .ev .x:hover { opacity: 1; }
+.ed-row { display: grid; gap: 6px; margin-bottom: 10px; }
+.ed-row input {
+  width: 100%;
+  background: var(--bg-2);
+  border: 1px solid var(--rule);
+  border-radius: 5px;
+  padding: 8px 10px;
+  font-family: var(--mono);
+  font-size: 13px;
+  color: var(--ink);
+  outline: none;
+  transition: border-color .15s;
+}
+.ed-row input:focus { border-color: var(--accent); }
+.ed-tags { display: flex; flex-wrap: wrap; gap: 4px; }
+.ed-tag {
+  font-size: 10px;
+  padding: 4px 8px;
+  border-radius: 999px;
+  border: 1px solid var(--rule);
+  background: var(--bg-2);
+  color: var(--ink-soft);
+  cursor: pointer;
+  letter-spacing: 0.04em;
+  transition: all .15s;
+}
+.ed-tag.active { background: var(--ink); color: var(--bg); border-color: var(--ink); }
+.ed-actions { display: flex; gap: 8px; justify-content: flex-end; margin-top: 12px; }
+.ed-actions button {
+  padding: 7px 14px;
+  border-radius: 5px;
+  font-size: 11px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  border: 1px solid var(--rule);
+  background: var(--bg-2);
+  color: var(--ink);
+  transition: background .15s;
+}
+.ed-actions button.primary { background: var(--ink); color: var(--bg); border-color: var(--ink); }
+.ed-actions button.primary:hover { background: var(--accent); border-color: var(--accent); }
+.ed-actions button:hover { background: var(--rule); }
+.editor .close-x {
+  position: absolute; top: 10px; right: 12px;
+  background: none; border: none; font-size: 18px;
+  color: var(--ink-soft); cursor: pointer; line-height: 1;
+}
+
+/* ───── footnote ───── */
+.foot {
+  margin-top: 60px;
+  display: flex;
+  justify-content: space-between;
+  color: var(--ink-soft);
+  font-size: 11px;
+  letter-spacing: 0.04em;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+.foot .sig { font-family: var(--hand); font-style: italic; font-size: 20px; color: var(--ink-soft); }
+
+@media (max-width: 860px) {
+  .hero { grid-template-columns: 1fr; gap: 60px; }
+  .hero-right { padding-top: 0; }
+  .el-name { font-size: 44px; }
+  .cal-head { grid-template-columns: 1fr; gap: 16px; }
+  .cal-nav { justify-self: flex-start; padding-bottom: 0; }
+  .cal-cell { min-height: 80px; padding: 6px 8px; }
+  .ev { font-size: 9.5px; padding: 2px 4px; }
+  .editor { width: calc(100vw - 32px); right: 16px; bottom: 16px; }
+}
+@media (max-width: 540px) {
+  .cal-cell { min-height: 56px; }
+  .ev { display: none; }
+  .ev-more { display: none; }
+  .cal-cell.has-ev::after {
+    content: "";
+    width: 4px; height: 4px; border-radius: 999px;
+    background: var(--accent); margin-top: auto;
+  }
+}
+</style>
+</head>
+<body>
+
+<div class="shell">
+
+<!-- ─── top tag ─── -->
+<div class="tag" data-screen-label="00 Tag">
+  <span class="pulse"></span>
+  <span style="font-size: 9px">MOALUDIN — FIELD NOTES, VOL. I</span>
+</div>
+
+<!-- ─── hero block: hero + signoff together fit one viewport ─── -->
+<div class="hero-block">
+<!-- ─── hero ─── -->
+<section class="hero" data-screen-label="01 Hero">
+  <div class="hero-left">
+    <div class="hero-name">
+      moaludin<span class="ast">✦</span>
+    </div>
+    <div class="hero-tag"><span class="typed" id="typed">solidity · audit · security</span><span class="caret" style="background-color: rgb(34, 26, 19)"></span></div>
+  </div>
+
+  <div class="hero-right">
+    <div class="elsewhere-head">
+      <span class="live-dot"></span>
+      <svg class="squiggle" viewBox="0 0 60 12" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round">
+        <path d="M2 6 L 58 6"/>
+        <path d="M52 2 L 58 6 L 52 10"/>
+      </svg>
+      <span>ELSEWHERE</span>
+    </div>
+    <div class="elsewhere-list">
+      <a class="el-item" href="https://github.com/akmalzufaaaf/sc-audit-portfolio" target="_blank" rel="noopener">
+        <span class="el-num">01</span>
+        <span class="el-name">github</span>
+        <span class="el-handle">github.com/akmalzufaaaf</span>
+      </a>
+      <a class="el-item" href="https://x.com/waiwaTF" target="_blank" rel="noopener">
+        <span class="el-num">02</span>
+        <span class="el-name">x</span>
+        <span class="el-handle">@waiwaTF</span>
+      </a>
+      <a class="el-item" href="https://medium.com/@moaludin" target="_blank" rel="noopener">
+        <span class="el-num">03</span>
+        <span class="el-name">blogs</span>
+        <span class="el-handle">medium.com/@moaludin</span>
+      </a>
+    </div>
+    <div style="margin-top: 40px; display:flex; justify-content:flex-end; gap:8px; align-items:center; color: var(--accent); font-family: var(--mono); font-size: 11px; letter-spacing: 0.12em;">
+      <span style="width:60px; height:1px; background: currentColor;"></span>
+      <span>END</span>
+    </div>
+  </div>
+</section>
+
+<div class="bottom-row">
+  <div><span class="ast-mark">✦</span>more at <a href="https://github.com/akmalzufaaaf/sc-audit-portfolio" target="_blank" rel="noopener" style="text-decoration: underline; text-decoration-color: var(--ink-soft); text-underline-offset: 4px;">github.com/akmalzufaaaf/sc-audit-portfolio</a></div>
+  <div class="sig">— akmal</div>
+</div>
+</div><!-- /.hero-block -->
+
+<!-- ─── divider ─── -->
+<div class="divider">
+  <span class="ix">/ 02</span>
+  <span>field journal</span>
+  <span class="line"></span>
+  <span>
+</span>
+</div>
+
+<!-- ─── calendar ─── -->
+<section data-screen-label="02 Calendar">
+  <div class="cal-head">
+    <div class="cal-title">
+      <span class="month-name" id="month-name">May</span><span class="year" id="year">2026</span>
+    </div>
+    <div class="cal-blurb">A logbook of what I did each day — click cell for details.</div>
+    <div class="cal-nav">
+      <button id="prev" aria-label="previous month">‹</button>
+      <button class="today-btn" id="today">today</button>
+      <button id="next" aria-label="next month">›</button>
+    </div>
+  </div>
+
+  <div class="cal-weekdays">
+    <div>Mon</div><div>Tue</div><div>Wed</div><div>Thu</div><div>Fri</div><div>Sat</div><div>Sun</div>
+  </div>
+
+  <div class="cal-grid" id="grid"></div>
+</section>
+
+<div class="foot">
+  <div>© 2026 — moaludin · stored on your device</div>
+  <div class="sig">— Boyolali, id</div>
+</div>
+
+</div>
+
+<!-- ─── editor ─── -->
+<div class="editor" id="editor">
+  <button class="close-x" id="ed-close">×</button>
+  <div class="ed-date" id="ed-date">—</div>
+  <div class="ed-sub" id="ed-sub">—</div>
+
+  <div class="ed-existing" id="ed-existing"></div>
+
+  <div class="ed-row">
+    <input type="text" id="ed-title" placeholder="what happened? (e.g. submitted TSwap)" autocomplete="off" />
+  </div>
+  <div class="ed-row ed-tags" id="ed-tags">
+    <button class="ed-tag active" data-tag="audit">● audit</button>
+    <button class="ed-tag" data-tag="study">● study</button>
+    <button class="ed-tag" data-tag="contest">● contest</button>
+    <button class="ed-tag" data-tag="writing">● writing</button>
+    <button class="ed-tag" data-tag="personal">● personal</button>
+  </div>
+  <div class="ed-actions">
+    <button id="ed-cancel">cancel</button>
+    <button id="ed-add" class="primary">+ add</button>
+  </div>
+  <div class="ed-export">
+    <span class="hint" id="sync-status">syncing…</span>
+  </div>
+</div>
+
+<!-- ─── visitor read-only popover ─── -->
+<div class="popover" id="popover">
+  <div class="pop-date" id="pop-date">—</div>
+  <div class="pop-list" id="pop-list"></div>
+</div>
+
+<!-- ─── owner unlock modal ─── -->
+<div class="lock-modal" id="lock-modal">
+  <div class="lock-card">
+    <div class="lock-title">owner mode</div>
+    <div class="lock-sub">enter password to edit the logbook</div>
+    <input type="password" id="lock-input" autocomplete="off" spellcheck="false" placeholder="password" />
+    <div class="lock-err" id="lock-err"></div>
+    <div class="lock-actions">
+      <button id="lock-cancel">cancel</button>
+      <button id="lock-submit" class="primary">unlock</button>
+    </div>
+  </div>
+</div>
+
+<!-- ─── owner badge ─── -->
+<div class="owner-badge" id="owner-badge">
+  <span class="pulse"></span>
+  <span>owner</span>
+  <button id="owner-lock" title="lock">⎋ lock</button>
+</div>
+
+<!-- ─── toast ─── -->
+<div class="toast" id="toast">copied</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+<script>
+/* ─────────────────────────────────────────────────────────────
+   LIVE SYNC VIA SUPABASE
+   ─────────────────────────────────────────────────────────────
+   Visitors get a live read of the events table (RLS: public).
+   Owner signs in via Supabase Auth and writes directly to it.
+
+   CONFIG — edit these three constants:
+   ───────────────────────────────────────────────────────────── */
+
+const SUPABASE_URL = "https://acylkqlgzcclbzklcjpy.supabase.co";
+const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFjeWxrcWxnemNjbGJ6a2xjanB5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzg5NTc2MDQsImV4cCI6MjA5NDUzMzYwNH0.R0AGD3idH75torz5awkCg9i_3vQAHRX1COnCmaUBsDM";
+const OWNER_EMAIL = "owner@moaludin.dev";  // ← the email you used in Supabase Auth → Users
+
+const sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+/* Offline fallback — shown until the first Supabase fetch returns.
+   Once you add events as owner, ignore this; the live table wins. */
+const BAKED_EVENTS = {
+  "2026-05-17": [{ t: "Symmio shadow — vesting math (cont.)", g: "audit" }],
+};
+
+let data = {};
+let _isOwner = false;
+const $syncStatus = () => document.getElementById("sync-status");
+
+function applyLockState(){
+  document.body.classList.toggle("locked", !_isOwner);
+  document.getElementById("owner-badge").classList.toggle("show", _isOwner);
+}
+
+function setSync(msg){ const el = $syncStatus(); if (el) el.textContent = msg; }
+
+async function fetchEvents(){
+  const { data: rows, error } = await sb
+    .from("events")
+    .select("id, date, title, category")
+    .order("date", { ascending: true });
+  if (error) {
+    console.warn("supabase fetch failed:", error);
+    return false;
+  }
+  const map = {};
+  for (const r of rows) {
+    if (!map[r.date]) map[r.date] = [];
+    map[r.date].push({ id: r.id, t: r.title, g: r.category });
+  }
+  data = map;
+  return true;
+}
+
+async function bootstrap(){
+  // 1. show baked snapshot immediately so the page isn't blank
+  data = JSON.parse(JSON.stringify(BAKED_EVENTS));
+  render();
+
+  // 2. restore session if any
+  const { data: sess } = await sb.auth.getSession();
+  _isOwner = !!sess.session;
+  applyLockState();
+
+  // 3. fetch live events
+  const ok = await fetchEvents();
+  if (ok) { render(); setSync("✓ live · synced"); }
+  else { setSync("offline · cached"); toast("offline — showing cached snapshot"); }
+
+  // 4. react to future auth changes
+  sb.auth.onAuthStateChange(async (_event, session) => {
+    _isOwner = !!session;
+    applyLockState();
+    render();
+  });
+}
+
+/* ─── calendar state ─── */
+const MONTHS = ["january","february","march","april","may","june","july","august","september","october","november","december"];
+let view = new Date();
+view.setDate(1);
+
+const $grid = document.getElementById("grid");
+const $monthName = document.getElementById("month-name");
+const $year = document.getElementById("year");
+
+function isoFor(y,m,d){ return `${y}-${String(m+1).padStart(2,"0")}-${String(d).padStart(2,"0")}`; }
+function todayISO(){
+  const t = new Date();
+  return isoFor(t.getFullYear(), t.getMonth(), t.getDate());
+}
+
+function render(){
+  const y = view.getFullYear();
+  const m = view.getMonth();
+  $monthName.textContent = MONTHS[m];
+  $year.textContent = y;
+
+  const first = new Date(y, m, 1);
+  // Monday-first
+  let lead = (first.getDay() + 6) % 7;
+  const daysInMonth = new Date(y, m+1, 0).getDate();
+  const prevDays = new Date(y, m, 0).getDate();
+
+  $grid.innerHTML = "";
+  const today = todayISO();
+  const cells = 42;
+  for (let i=0; i<cells; i++) {
+    let dayNum, monthOffset = 0, cellY = y, cellM = m, out = false;
+    if (i < lead) {
+      dayNum = prevDays - lead + i + 1;
+      monthOffset = -1; out = true;
+      if (m === 0) { cellY = y-1; cellM = 11; } else { cellM = m-1; }
+    } else if (i >= lead + daysInMonth) {
+      dayNum = i - lead - daysInMonth + 1;
+      monthOffset = 1; out = true;
+      if (m === 11) { cellY = y+1; cellM = 0; } else { cellM = m+1; }
+    } else {
+      dayNum = i - lead + 1;
+    }
+    const iso = isoFor(cellY, cellM, dayNum);
+    const evs = data[iso] || [];
+    const cell = document.createElement("div");
+    cell.className = "cal-cell" + (out ? " out" : "") + (iso === today ? " today" : "") + (evs.length ? " has-ev" : "");
+    cell.dataset.iso = iso;
+    const visible = evs.slice(0,2);
+    const more = evs.length - visible.length;
+    cell.innerHTML = `
+      <div class="cal-date">
+        <span>${String(dayNum).padStart(2,"0")}</span>
+        <span class="cal-add">＋</span>
+      </div>
+      <div class="ev-list">
+        ${visible.map(e => `<div class="ev tag-${e.g||'audit'}" title="${escapeHtml(e.t)}"><span class="dot"></span><span>${escapeHtml(e.t)}</span></div>`).join("")}
+        ${more > 0 ? `<div class="ev-more">+${more} more</div>` : ""}
+      </div>
+    `;
+    cell.addEventListener("click", () => openEditor(iso));
+    $grid.appendChild(cell);
+  }
+}
+
+function escapeHtml(s){ return String(s).replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c])); }
+
+/* ─── nav ─── */
+document.getElementById("prev").onclick = () => { view.setMonth(view.getMonth()-1); render(); };
+document.getElementById("next").onclick = () => { view.setMonth(view.getMonth()+1); render(); };
+document.getElementById("today").onclick = () => { view = new Date(); view.setDate(1); render(); };
+
+/* ─── editor ─── */
+const $editor = document.getElementById("editor");
+const $edDate = document.getElementById("ed-date");
+const $edSub = document.getElementById("ed-sub");
+const $edExisting = document.getElementById("ed-existing");
+const $edTitle = document.getElementById("ed-title");
+const $edTags = document.getElementById("ed-tags");
+let currentISO = null;
+let currentTag = "audit";
+
+function openEditor(iso){
+  if (!_isOwner) { showPopover(iso); return; }
+  currentISO = iso;
+  const d = new Date(iso + "T00:00:00");
+  const wd = ["Sunday","Monday","Tuesday","Wednesday","Thursday","Friday","Saturday"][d.getDay()];
+  $edDate.textContent = `${wd} ${d.getDate()}`;
+  $edSub.textContent = `${MONTHS[d.getMonth()]} ${d.getFullYear()}`;
+  renderExisting();
+  $edTitle.value = "";
+  $editor.classList.add("open");
+  setTimeout(()=>$edTitle.focus(), 60);
+  // mark selected cell
+  document.querySelectorAll(".cal-cell").forEach(c=>c.classList.toggle("selected", c.dataset.iso === iso));
+}
+function closeEditor(){
+  $editor.classList.remove("open");
+  currentISO = null;
+  document.querySelectorAll(".cal-cell.selected").forEach(c=>c.classList.remove("selected"));
+}
+
+function renderExisting(){
+  const evs = data[currentISO] || [];
+  if (!evs.length) { $edExisting.innerHTML = `<div style="font-size:11px;color:var(--ink-soft); padding:4px 0;">no entries yet — add one below</div>`; return; }
+  $edExisting.innerHTML = evs.map((e) =>
+    `<div class="ev tag-${e.g||'audit'}" data-id="${escapeHtml(e.id)}"><span class="dot"></span><span>${escapeHtml(e.t)}</span><button class="x" data-id="${escapeHtml(e.id)}" aria-label="delete">×</button></div>`
+  ).join("");
+  $edExisting.querySelectorAll(".x").forEach(b => b.onclick = (e) => {
+    e.stopPropagation();
+    deleteEntry(currentISO, b.dataset.id);
+  });
+}
+
+async function deleteEntry(iso, id){
+  if (!_isOwner) return;
+  const original = (data[iso] || []).slice();
+  data[iso] = (data[iso] || []).filter(e => String(e.id) !== String(id));
+  if (!data[iso].length) delete data[iso];
+  renderExisting();
+  render();
+  if (String(id).startsWith("tmp-")) return;
+  const { error } = await sb.from("events").delete().eq("id", id);
+  if (error){
+    toast("delete failed");
+    data[iso] = original;
+    renderExisting();
+    render();
+  }
+}
+
+$edTags.querySelectorAll(".ed-tag").forEach(t => t.onclick = () => {
+  $edTags.querySelectorAll(".ed-tag").forEach(x => x.classList.remove("active"));
+  t.classList.add("active");
+  currentTag = t.dataset.tag;
+});
+
+async function addEntry(){
+  const v = $edTitle.value.trim();
+  if (!v || !currentISO || !_isOwner) return;
+  const tempId = "tmp-" + Math.random().toString(36).slice(2);
+  if (!data[currentISO]) data[currentISO] = [];
+  data[currentISO].push({ id: tempId, t: v, g: currentTag });
+  $edTitle.value = "";
+  renderExisting();
+  render();
+  document.querySelectorAll(".cal-cell").forEach(c=>c.classList.toggle("selected", c.dataset.iso === currentISO));
+  $edTitle.focus();
+
+  const { data: row, error } = await sb
+    .from("events")
+    .insert({ date: currentISO, title: v, category: currentTag })
+    .select()
+    .single();
+
+  if (error){
+    toast("save failed — check console");
+    console.warn(error);
+    data[currentISO] = data[currentISO].filter(e => e.id !== tempId);
+    if (!data[currentISO].length) delete data[currentISO];
+    renderExisting();
+    render();
+    return;
+  }
+  const idx = data[currentISO].findIndex(e => e.id === tempId);
+  if (idx >= 0) data[currentISO][idx].id = row.id;
+}
+
+document.getElementById("ed-add").onclick = addEntry;
+document.getElementById("ed-cancel").onclick = closeEditor;
+document.getElementById("ed-close").onclick = closeEditor;
+$edTitle.addEventListener("keydown", e => {
+  if (e.key === "Enter") addEntry();
+  if (e.key === "Escape") closeEditor();
+});
+
+/* ─── popover for visitors ─── */
+const $pop = document.getElementById("popover");
+const $popDate = document.getElementById("pop-date");
+const $popList = document.getElementById("pop-list");
+function showPopover(iso){
+  const evs = data[iso] || [];
+  if (!evs.length) { $pop.classList.remove("open"); return; }
+  const d = new Date(iso + "T00:00:00");
+  const wd = ["Sunday","Monday","Tuesday","Wednesday","Thursday","Friday","Saturday"][d.getDay()];
+  $popDate.textContent = `${wd} ${d.getDate()} ${MONTHS[d.getMonth()]}`;
+  $popList.innerHTML = evs.map(e =>
+    `<div class="ev tag-${e.g||'audit'}"><span class="dot"></span><span>${escapeHtml(e.t)}</span></div>`
+  ).join("");
+  const cell = document.querySelector(`.cal-cell[data-iso="${iso}"]`);
+  if (cell){
+    const r = cell.getBoundingClientRect();
+    let x = r.left, y = r.bottom + 6;
+    $pop.classList.add("open");
+    const pw = $pop.offsetWidth;
+    if (x + pw > window.innerWidth - 12) x = window.innerWidth - pw - 12;
+    if (y + 200 > window.innerHeight) y = r.top - $pop.offsetHeight - 6;
+    $pop.style.left = x + "px"; $pop.style.top = y + "px";
+  }
+}
+document.addEventListener("click", e => {
+  if (!e.target.closest(".cal-cell") && !e.target.closest("#popover")) $pop.classList.remove("open");
+});
+
+/* ─── owner lock / unlock ─── */
+const $lockModal = document.getElementById("lock-modal");
+const $lockInput = document.getElementById("lock-input");
+const $lockErr = document.getElementById("lock-err");
+const $toast = document.getElementById("toast");
+
+function openLock(){ $lockErr.textContent = ""; $lockInput.value = ""; $lockModal.classList.add("open"); setTimeout(()=>$lockInput.focus(),60); }
+function closeLock(){ $lockModal.classList.remove("open"); }
+async function tryUnlock(){
+  const pw = $lockInput.value;
+  if (!pw) return;
+  $lockErr.textContent = "signing in…";
+  const { error } = await sb.auth.signInWithPassword({ email: OWNER_EMAIL, password: pw });
+  if (error){
+    $lockErr.textContent = "wrong password";
+    $lockInput.select();
+    return;
+  }
+  closeLock();
+  toast("owner mode · unlocked");
+  await fetchEvents();
+  render();
+}
+async function lockOut(){
+  await sb.auth.signOut();
+  closeEditor();
+  toast("locked");
+}
+document.getElementById("lock-submit").onclick = tryUnlock;
+document.getElementById("lock-cancel").onclick = closeLock;
+document.getElementById("owner-lock").onclick = lockOut;
+$lockInput.addEventListener("keydown", e => {
+  if (e.key === "Enter") tryUnlock();
+  if (e.key === "Escape") closeLock();
+});
+
+/* Shift+L opens unlock prompt */
+window.addEventListener("keydown", e => {
+  if (e.shiftKey && (e.key === "L" || e.key === "l") && !e.metaKey && !e.ctrlKey && !e.altKey) {
+    const tag = (e.target && e.target.tagName) || "";
+    if (tag === "INPUT" || tag === "TEXTAREA") return;
+    e.preventDefault();
+    if (_isOwner) lockOut(); else openLock();
+  }
+});
+
+/* ─── toast ─── */
+function toast(msg){
+  $toast.textContent = msg;
+  $toast.classList.add("show");
+  clearTimeout(toast._t);
+  toast._t = setTimeout(()=>$toast.classList.remove("show"), 1800);
+}
+
+/* ─── typed cycling tagline ─── */
+(function(){
+  const el = document.getElementById("typed");
+  if (!el) return;
+  const phrases = [
+    "solidity · audit · security",
+    "evm · foundry · slither",
+    "auditor in training, 2026",
+    "reading contracts, slowly",
+  ];
+  let p = 0, i = 0, deleting = false;
+  function step(){
+    const cur = phrases[p];
+    if (!deleting) {
+      i++;
+      el.textContent = cur.slice(0, i);
+      if (i === cur.length) { deleting = true; setTimeout(step, 1800); return; }
+    } else {
+      i--;
+      el.textContent = cur.slice(0, i);
+      if (i === 0) { deleting = false; p = (p+1) % phrases.length; }
+    }
+    setTimeout(step, deleting ? 30 : 60 + Math.random()*40);
+  }
+  setTimeout(step, 800);
+})();
+
+render();
+bootstrap();
+</script>
+
+</body>
+</html>
